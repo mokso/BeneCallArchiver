@@ -1,6 +1,7 @@
 # dotsource functions
-. .\beneapi-functions.ps1
-. .\sqlite-functions.ps1
+. "$PSScriptRoot\install-modules.ps1"
+. "$PSScriptRoot\beneapi-functions.ps1"
+. "$PSScriptRoot\sqlite-functions.ps1"
 
 # Load the tag-lib assembly for tagging mp3 files
 [Reflection.Assembly]::LoadFrom( (Resolve-Path ("$PSScriptRoot\TagLibSharp.dll"))) | Out-Null
@@ -72,14 +73,21 @@ if (-not (Test-Path $RootPath)) {
 $script:api = Get-BeneAPIAuth 
 
 #initialize SQLite DB
-Initialize-CallDatabase -rootDirectory $RootPath
+
+$dbok = Initialize-CallDatabase -rootDirectory $RootPath
+
+if (-not $dbok) {
+  Write-host "No DB, exiting..."
+  return
+}
+
 
 #get latest call stored in database
 $latest = Get-LatestCall 
 $now = get-date
 
 while ($latest -lt $now) {
-  $min = $latest
+  $min = $latest.AddSeconds(1)
   $max = $latest.AddDays($BeneAPIDays)
   
   Invoke-BeneCallArchive -MinDate $min -MaxDate $max 

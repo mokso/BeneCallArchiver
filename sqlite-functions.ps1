@@ -4,13 +4,20 @@ function Initialize-CallDatabase {
     Param(
         [string] $RootDirectory
     )
-    $dbfile = Join-Path $RootDirectory "callhistory.db"
-    $script:dbconn = New-SQLiteConnection -DataSource $dbfile
-
-    # Ensure tables exists
-    $createTablesQueryFile = Join-Path $PSScriptRoot "sqlite/create-tables.sql"
-    Write-Verbose "Initializing tables..."
-    Invoke-SqliteQuery -SQLiteConnection $dbconn -InputFile $createTablesQueryFile
+    try {
+        $dbfile = Join-Path $RootDirectory "callhistory.db"
+        $script:dbconn = New-SQLiteConnection -DataSource $dbfile
+    
+        # Ensure tables exists
+        $createTablesQueryFile = Join-Path $PSScriptRoot "sqlite/create-tables.sql"
+        Write-Verbose "Initializing tables..."
+        Invoke-SqliteQuery -SQLiteConnection $dbconn -InputFile $createTablesQueryFile
+        return $true
+    }
+    catch {
+        Write-Warning "Error initializing SQLite`n$_"
+        return $false
+    }
 }
 
 function Add-BeneCallToDatabase {
