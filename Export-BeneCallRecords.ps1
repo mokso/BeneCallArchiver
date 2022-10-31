@@ -19,6 +19,25 @@ $BeneAPIDays = 30
 
 ############### Functions ###############
 
+function WriteLog {
+  Param(
+    [string] $Message,
+    [String] $LogLevel = "Info"
+  )
+
+  $logPath = Join-Path $env:BENECALLARCHIVER_ROOTPATH "Logs"
+  $logFile = Join-Path $logPath "BeneCallArchiver_$(Get-Date -Format "yyyyMMdd").log"
+
+  if (-not (Test-Path $logPath)){
+    New-Item $logPath -ItemType Directory
+  }
+
+  $logRow = "$(Get-Date -Format "yyyy-MM-dd HH':'mm':'ss") [$LogLevel] $Message"
+  write-host $logRow
+  $logRow | Out-File $logFile -Append
+
+}
+
 function Invoke-BeneCallArchive {
   param (
     #
@@ -26,10 +45,10 @@ function Invoke-BeneCallArchive {
     [datetime] $MaxDate
   )
 
-  Write-host "Getting calls from $MinDate to $MaxDate"
+  WriteLog "Getting calls from $MinDate to $MaxDate"
   
   $calls = Get-BeneUserCalls -ApiInfo $api -TimeFrom $MinDate -TimeTo $MaxDate
-  Write-host "Retrieved $($calls.Count) call records"
+  WriteLog "Retrieved $($calls.Count) call records"
 
   foreach ($c in $calls) {
     Add-BeneCallToDatabase -Call $c 
@@ -64,7 +83,9 @@ function Invoke-BeneCallArchive {
 ############### Process ###############
 #Process starts here
 
-Write-host "Root-path [$RootPath]"
+WriteLog "Starting CallExporter"
+
+WriteLog "Root-path [$RootPath]"
 if (-not (Test-Path $RootPath)) {
   New-Item $RootPath -ItemType Directory
 }
@@ -77,18 +98,22 @@ $script:api = Get-BeneAPIAuth
 $dbok = Initialize-CallDatabase -rootDirectory $RootPath
 
 if (-not $dbok) {
-  Write-host "No DB, exiting..."
+  WriteLog "No DB, exiting..." -LogLevel "Error"
   return
 }
 
 
 #get latest call stored in database
 $latest = Get-LatestCall 
+WriteLog "Latest call in database $latest"
 $now = get-date
 
 while ($latest -lt $now) {
   $min = $latest.AddSeconds(1)
   $max = $latest.AddDays($BeneAPIDays)
+  if ($max -gt $now) {
+    $max = $now
+  }
   
   Invoke-BeneCallArchive -MinDate $min -MaxDate $max 
   $latest = $max
