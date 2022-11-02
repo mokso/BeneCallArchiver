@@ -7,6 +7,10 @@ Store personal call history and call recordings to local filesyste and SQLite da
 - PSSQLite module
 - User account on BeneCloud with  Callrecording on
 
+For Speech-to-text
+- Azure speech key
+- Ffmpg  on PATH
+
 ### Env variables
 
 | Variable | Description |
@@ -14,6 +18,8 @@ Store personal call history and call recordings to local filesyste and SQLite da
 | BENEAPI_USERNAME | Username of account |
 | BENEAPI_APISECRET | API SecretKey, [more info](https://doc.enreachvoice.com/beneapi/#key-acquisition) |
 | BENECALLARCHIVER_ROOTPATH | Path to folder where call-info database, and possible callrecordings are stored |
+| AZURE_SPEECH_KEY | Key to Azure speech | 
+| AZURE_SPEECH_REGION | Azure speech region | 
 
 
 ### Folder structure
